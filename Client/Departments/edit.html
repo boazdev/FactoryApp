@@ -1,0 +1,201 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="../w3.css">
+    <head>
+        <title>Edit Department</title>
+        <script type="text/javascript" src="../menu.js"></script>
+        <script>
+            var gToken;
+            var gdeptID;
+            async function addEmpToDept()
+            {
+                let idEmp= document.getElementById("idSelectEmp").value
+                let uToken = sessionStorage["token"]
+                     
+
+         let objSend = {DepartmentID : gdeptID
+                       
+                    }
+
+            console.log("Sending obj:")
+            console.log(objSend)
+            try {
+                let fetchParams = {method : 'PUT',
+                                    body : JSON.stringify(objSend),
+                                    headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+                //console.log("fetchParams:")
+               // console.log(fetchParams)
+                let resp = await fetch("http://localhost:5000/employees/"+idEmp,fetchParams);
+                //console.log("resp:")
+                //console.log(resp.status)
+            let respData = await resp.json();
+            if(resp.ok)
+                redirect(respData+" " +"allocated employee do selected department","Departments")
+            else
+                redirect(respData["error"],"login")
+            }
+            catch(e)
+            {
+                console.log(e)
+            }
+            }
+            function logoutA()
+            {
+                document.location.href = "../login.html"
+            }
+           
+
+            function cancel(cancelBtnObj)
+            {
+                changePage(cancelBtnObj,true)
+            }
+
+            async function deleteDepartment()
+            {
+                let fetchParams = {method : 'DELETE',
+                      headers : {"Content-Type" : "application/json",'x-access-token' : gToken}
+                }
+                let resp = await fetch("http://localhost:5000/departments/"+gdeptID,fetchParams);
+                let respData =  await resp.json()
+                if(resp.ok)
+                    redirect(respData,"Departments")
+                else
+                    redirect(respData["error"],"login")
+            
+            }
+            async function getDeptData(userToken)
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/departments/"+gdeptID,fetchParams);
+            
+            let deptData = await resp.json();
+            console.log("departments data:")
+            console.log(deptData)
+            return deptData
+            //
+            }
+            async function getAllEmployees(userToken)
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/employees",fetchParams);
+            
+            let employeesData = await resp.json();
+            let selectObj = document.getElementById("idSelectManager")
+            let selectObjNe = document.getElementById("idSelectEmp")
+            employeesData.forEach(emp => {
+                let optionObj = document.createElement("option")
+                optionObj.value = emp._id
+                optionObj.innerText = emp.Firstname + " "  +emp.Lastname
+                selectObj.appendChild(optionObj)
+                
+                if(emp.DepartmentID!=gdeptID)
+                {
+                    let optionObjNe = document.createElement("option")
+                    optionObjNe.value = emp._id
+                    optionObjNe.innerText = emp.Firstname + " "  +emp.Lastname
+                    selectObjNe.appendChild(optionObjNe)
+                }
+                
+            });
+            
+            }
+            async function getAllData()
+            {
+                tryDoAction()
+                let token = sessionStorage["token"]
+                //console.log("token: " + token)
+                gToken = token
+                const queryString = window.location.search;
+                const urlParams = new URLSearchParams(queryString);
+                deptID= urlParams.get('deptid') //will now get department name and manager nam
+                gdeptID = deptID
+                let selectObj = document.getElementById("idSelectManager")
+                
+                let deptNameObj = document.getElementById("idDeptName")
+                deptNameObj.value = urlParams.get('deptname')
+
+                let userFullname =sessionStorage["fullname"] 
+                let txtUserFullname = document.getElementById("idFullname");
+                txtUserFullname.innerText = "User Fullname: " + userFullname
+                 deptData = await getDeptData(token)
+                await getAllEmployees(token)
+                selectObj.value = deptData.Manager
+                
+            }
+            async function saveDepartment()
+            {
+                      let uToken = sessionStorage["token"]
+                     
+
+         let objSend = {Name : document.getElementById("idDeptName").value,
+                        Manager : document.getElementById("idSelectManager").value
+                    }
+
+            console.log("Sending obj:")
+            console.log(objSend)
+            try {
+                let fetchParams = {method : 'PUT',
+                                    body : JSON.stringify(objSend),
+                                    headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+
+                let resp = await fetch("http://localhost:5000/departments/"+gdeptID,fetchParams);
+            let respData = await resp.json();
+            if(resp.ok)
+                redirect(respData,"Departments")
+            }
+            catch(e)
+            {
+                console.log(e)
+            }
+                
+            }
+        </script>
+    </head>
+    <body onload="getAllData()" style="background-color:#800006">
+        <div  style= "position:relative; left:80px; top:2px;">
+            <h1>Factory managment system : Edit Department</h1>
+            <h2 id="idFullname"></h2>
+            <button type="button" class="btn btn-dark" id="../Employees" onclick="changePage(this,true)">Employees</button>
+            <button type="button" class="btn btn-dark" id="../Departments" onclick="changePage(this,true)">Departments</button>
+            <button type="button" class="btn btn-dark" id="../Shifts" onclick="changePage(this,true)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="../Users" onclick="changePage(this,true)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logoutA()">Logout</button>
+            <br/>
+            
+             <br/><br/>
+  
+             <!-- <form> -->
+                <div class="form-group">
+                  <label for="idDeptName">Department name</label>
+                  <input type="text" class="form-control" id="idDeptName" aria-describedby="Department Name" placeholder="Enter department name">
+                </div>
+                <div class="form-group">
+                  <label for="idSelectManager">Select Manager</label>
+                  <select name="selectManager" id="idSelectManager" ></select>
+                </div>
+                <div class="form-group">
+                    <label for="idSelectEmp">Allocate Employee</label>
+                    <select name="selectEmployee" id="idSelectEmp" ></select>
+                    <button type ="button" onclick="addEmpToDept()">Add</button>
+                  </div>
+                
+            
+                
+               
+               
+                
+                
+                <button type="input" id ="../Departments" class="btn btn-primary" onclick="cancel(this)">Cancel</button>
+              <!-- </form> -->
+              <button type="input" id="blarg" onclick="saveDepartment()">Update</button>
+              <button type="input" id="idBtnDelete" onclick="deleteDepartment()">Delete</button>
+        
+        </div>
+    </body>
+</html>

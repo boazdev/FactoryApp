@@ -1,0 +1,29 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="w3.css">
+    <head>
+        <title>Redirecting...</title>
+        <script>
+            var strhtmlAddr
+            async function redirect()
+            {
+                const queryString = window.location.search;
+                const urlParams = new URLSearchParams(queryString);
+                let strMessage = urlParams.get("message")
+                strHtmlAddr = urlParams.get("page")
+                let h1Obj = document.getElementById("idTextShow")
+                h1Obj.innerText=strMessage
+                await setTimeout(changePage, 3000)
+                
+            }
+            function changePage()
+            {
+                document.location.href = strHtmlAddr+".html"
+            }
+        </script>
+        </head>
+        <body style="background-color:#800006" onload="redirect()"></body>
+        <br>
+        <h1 id="idTextShow"></h1><br>
+        <h2>Redirecting... Please wait...</h2>
+</html>

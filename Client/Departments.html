@@ -1,0 +1,124 @@
+<html>
+    <link rel="stylesheet" href="w3.css">
+
+    <head>
+        <title>Departments</title>
+        <script type="text/javascript" src="menu.js"></script>
+        <script>
+            function addDepartment()
+            {
+                document.location.href = "Departments/add.html"
+            }
+            
+            function fillTable(deptData,tblObj)
+            {
+                deptData.forEach(dept => {
+                
+
+                let tdName = document.createElement("td");
+                let linkObj = document.createElement("a")
+                linkObj.innerText = dept.Name;
+                linkObj.href = "Departments/edit.html?deptid=" + dept._id+"&deptname="+dept.Name +"&managerid="+dept.Manager;
+                linkObj.id=dept._id
+                //linkObj.onclick = setEditDeptData()
+                //linkObj.setAttribute('onclick','setEditDeptData(this)');
+                //linkObj.getAttribute
+                tdName.appendChild(linkObj);
+        
+        
+                let tdManager = document.createElement("td");
+                tdManager.innerText = dept.deptManager
+                
+                
+        
+                let tdEmps = document.createElement("td");
+                let txtStr=""
+                let divEmps= document.createElement("div")
+                if(dept.deptEmps.length!=0)
+                {
+                    
+                    dept.deptEmps.forEach(emp => {
+                        
+                    txtStr=  emp.Firstname +" " + emp.Lastname /* +'\n'  */
+                    let linkObj = document.createElement("a")
+                   
+                linkObj.innerText = txtStr;
+                linkObj.href = "Employees/edit.html?empid=" + emp._id;
+                let newLineObj = document.createElement("br")
+                divEmps.appendChild(linkObj)
+                divEmps.appendChild(newLineObj) 
+                });
+                }
+                /* let linkObj = document.createElement("a")
+                linkObj.innerText = dept.Name;
+                linkObj.href = "Departments/edit.html?deptid=" + dept._id; */
+                tdEmps.appendChild(divEmps)
+                
+                //tdShifts.innerText = "shifts data"
+                
+        
+                let trObj = document.createElement("tr");
+        
+                trObj.appendChild(tdName);
+                trObj.appendChild(tdManager);
+                trObj.appendChild(tdEmps);
+          
+        
+        
+                tblObj.appendChild(trObj);
+                    });
+            }
+            async function getData()
+            {
+                let token = sessionStorage["token"]
+                let userFullname =sessionStorage["fullname"] 
+                //let userData = parseJwt(token)
+            //console.log(token);
+            let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : token}//{"Content-Type" : "application/json"}
+                      }
+            let resp = await fetch("http://localhost:5000/departments/?is_join=true",fetchParams);
+            
+            let deptsData = await resp.json();
+            console.log(deptsData)
+            
+            if(resp.ok!=true)
+                redirectClient(deptsData["error"],"login")
+                      
+            txtUserFullname = document.getElementById("idFullname");
+            txtUserFullname.innerText = "User Fullname: " + userFullname
+            tblObj = document.getElementById("idTblBody")
+            fillTable(deptsData,tblObj)
+            }
+        </script>
+    </head>
+    <body onload="getData()" style="background-color:#800006">  <!-- //get departments data, with employees list that belong to each, need to do join -->
+        <div class="container">
+            <h1>Factory managment system : Departments</h1>
+            <h2 id="idFullname"></h2>
+            <button type="button" class="btn btn-dark" id="Employees" onclick="changePage(this)">Employees</button>
+            <button type="button" class="btn btn-dark" id="Departments" onclick="changePage(this)">Departments</button>
+            <button type="button" class="btn btn-dark" id="Shifts" onclick="changePage(this)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="Users" onclick="changePage(this)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logout()">Logout</button>
+            <br/><button type="button" class="btn btn-dark" id="Departments/add" onclick="changePage(this)">New Department</button>
+             <br/>
+        
+            <table border="1">
+                <thead>
+                  <tr>
+                    <th scope="col">Department</th>
+                    <th scope="col">Manager</th>
+                    <th scope="col">Employees</th>
+                    
+                  </tr>
+                </thead>
+                <tbody id="idTblBody" >
+                 
+                </tbody>
+           
+        
+        
+        </div>
+    </body>
+</html>

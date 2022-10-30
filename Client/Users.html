@@ -1,0 +1,78 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="w3.css">
+    <head>
+        <title>Users</title>
+        <script type="text/javascript" src="menu.js"></script>
+        <script>
+            async function getAllData()
+            {
+                userToken=sessionStorage["token"]
+                let userFullname =sessionStorage["fullname"] 
+                txtUserFullname = document.getElementById("idFullname");
+            txtUserFullname.innerText = "User Fullname: " + userFullname
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/users",fetchParams);
+            
+            let usersData = await resp.json();
+            if(resp.ok!=true)
+                redirectClient(usersData["error"],"login")
+            console.log(usersData)
+            tblObj = document.getElementById("idTblBody")
+            fillTable(usersData,tblObj)
+            }
+            function fillTable(usersData,tblObj)
+            {
+                usersData.forEach(user => {
+                
+                    let trObj = document.createElement("tr");
+                let tdNameObj = document.createElement("td");
+                
+                
+                tdNameObj.innerText = user.FullName
+                
+                let tdMaxActionsObj = document.createElement("td");
+                tdMaxActionsObj.innerText = user.NumOfActions
+
+                let tdCurrActionsObj = document.createElement("td");
+                tdCurrActionsObj.innerText = user.currActions  //need to fetch data frm json file
+                trObj.appendChild(tdNameObj)
+                trObj.appendChild(tdMaxActionsObj)
+                trObj.appendChild(tdCurrActionsObj)
+                tblObj.appendChild(trObj)
+                })
+            }
+        </script>
+    </head>
+    <body onload="getAllData()" style="background-color:#800006;">
+        <div class="container">
+            <h1>Factory managment system : Users</h1>
+            <h1 id="idFullname"></h1>
+            <button type="button" class="btn btn-dark" id="Employees" onclick="changePage(this)">Employees</button>
+            <button type="button" class="btn btn-dark" id="Departments" onclick="changePage(this)">Departments</button>
+            <button type="button" class="btn btn-dark" id="Shifts" onclick="changePage(this)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="Users" onclick="changePage(this)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logout()">Logout</button>
+            <br/> <br/>
+            <table border="1">
+                <thead>
+                  <tr>
+                    <th scope="col">User Name</th>
+                    <th scope="col">Maximum actions allowed</th>
+                    <th scope="col">Current actions allowed today</th>
+    
+                  </tr>
+                </thead>
+                <tbody id="idTblBody">
+                 
+                </tbody>
+              </table>
+        
+           
+        
+        
+        </div>
+    </body>
+</html>

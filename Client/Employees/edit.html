@@ -1,0 +1,280 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="../w3.css">
+    <head>
+        <title>Edit Employee</title>
+        <script type="text/javascript" src="../menu.js"></script>
+        <script>
+            var userToken
+            var gEmpID
+            async function deleteEmployee()
+            {
+              let uToken = sessionStorage["token"]
+              try {
+                    let fetchParams = {method : 'DELETE',
+                                        //body : JSON.stringify(objSend),
+                                        headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+
+                let resp = await fetch("http://localhost:5000/employees/"+gEmpID,fetchParams);
+                
+            let respData = await resp.json();
+            if(resp.ok)
+                redirect(respData,"Employees")
+            else
+                redirect(respData["error"],"login")
+            }
+            catch(e)
+            {
+              console.log(e)
+            }
+            
+            }
+            async function updateEmployee()
+            {
+              let uToken = sessionStorage["token"]
+              
+              let checkbox = document.getElementById("idRegChkBox");
+              let selectedShift=null
+              console.log("is check box checked" + checkbox.checked)
+              if(checkbox.checked==true)
+              {
+                selectedShift= document.querySelector('input[name="radioShift"]:checked').value
+              }
+                  
+
+               
+              let objSend = {Firstname : document.getElementById("idFirstName").value,
+                            Lastname : document.getElementById("idLastName").value,
+                            StartWorkYear : parseInt(document.getElementById("idStartWorkYear").value),
+                            DepartmentID : document.getElementById("idSelectDept").value,
+                            sID : selectedShift
+                        }  
+            console.log("update sent obj:")
+               console.log(objSend)
+                try {
+                    let fetchParams = {method : 'PUT',
+                                        body : JSON.stringify(objSend),
+                                        headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+
+                let resp = await fetch("http://localhost:5000/employees/"+gEmpID,fetchParams);
+                
+            let respData = await resp.json();
+            if(resp.ok)
+                redirect(respData,"Employees")
+            else 
+                redirect(respData["error"],"login")
+            }
+            catch(e)
+            {
+                console.log(e)
+            }
+
+            }
+            async function getEmpData(empID)
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {"Content-Type" : "application/json",'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/employees/"+empID,fetchParams);
+            
+            let empData = await resp.json();
+            //console.log(empData)
+            return empData
+            }
+
+            async function getEmpShifts()
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {"Content-Type" : "application/json",'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/employees/"+empID+"?is_shift=true",fetchParams);
+            
+            let empData = await resp.json();
+            //console.log(empData)
+            return empData
+            }
+            async function getAllDeptData()
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/departments",fetchParams);
+            
+            let departmentsData = await resp.json();
+            return departmentsData
+            //console.log("departments data:")
+            }
+            async function getAllShifts()
+            {
+              let param = "?is_existing="+ "true"
+              let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/shifts/"+param,fetchParams);
+            
+            let shiftsData = await resp.json();
+            return shiftsData
+            }
+            async function getAllData()
+            {
+              tryDoAction()
+                userToken=sessionStorage["token"]
+                const queryString = window.location.search;
+
+                const urlParams = new URLSearchParams(queryString);
+                empID= urlParams.get('empid')
+                gEmpID = empID
+                //console.log(empID);
+                let empData = await getEmpData(empID) //get selected employee data
+                let deptsData = await getAllDeptData()
+                let empShifts = await getEmpShifts()
+                let shiftsData = await getAllShifts() //get all shifts data to allow registering the employee to an 
+                console.log("all shifts data:")                               //existing shift
+                console.log(shiftsData)
+                let firstNameObj = document.getElementById("idFirstName")
+                firstNameObj.value= empData.Firstname
+
+                let lastNameObj =document.getElementById("idLastName")
+                lastNameObj.value= empData.Lastname
+                let startWorkYearObj =document.getElementById("idStartWorkYear")
+                startWorkYearObj.value= empData.StartWorkYear.toString()
+                //console.log(empData)
+                //console.log(deptsData)
+                let selectObj = document.getElementById("idSelectDept")
+            
+            deptsData.forEach(deptObj => {
+                let optionObj = document.createElement("option")
+                optionObj.value = deptObj._id
+                optionObj.innerText = deptObj.Name
+                selectObj.appendChild(optionObj)
+            });
+            selectObj.value = empData.DepartmentID
+            //selectObj.
+                //deptData = getDepartmentsData() //get departments names and ids
+                fillEmpShiftsTble(empShifts)
+                fillAllShiftsTbl(shiftsData)
+            }
+
+            function fillAllShiftsTbl(shiftsData)
+            {
+              shiftContObj =document.getElementById("shiftContainer")
+              shiftsData.forEach(shift => {
+
+                let txtStr=""
+                let radioObj = document.createElement("input")
+                radioObj.type = "radio"
+                radioObj.name = "radioShift"
+                radioObj.value = shift._id
+                radioObj.id = shift._id
+                
+                let lblObj = document.createElement("label")
+                lblObj.htmlFor = shift._id
+                txtStr+=  shift.Date +" " + shift.StartingHour +":00 - " + shift.EndingHour + ':00'
+                var description = document.createTextNode(txtStr);
+                lblObj.appendChild(description)
+                let newLine=document.createElement("br")
+                
+                
+                //console.log(tblBodyObj)
+                shiftContObj.appendChild(radioObj)
+                shiftContObj.appendChild(lblObj)
+                shiftContObj.appendChild(newLine)
+              })
+            }
+
+            function fillEmpShiftsTble(empShifts)
+            {
+            tblBodyObj = document.getElementById("idTblBody")
+            if(empShifts!=null)
+            {
+              let trShifts = document.createElement("tr")
+              let tdShifts = document.createElement("td");
+                let txtStr=""
+                
+                 //console.log(empShifts.shiftDate)
+
+                empShifts.shiftDate.forEach(shift => {
+                        
+                    txtStr+=  shift.Date +" " + shift.StartingHour +":00 - " + shift.EndingHour + ':00\n' 
+                    
+                });
+                
+                tdShifts.innerText=txtStr
+                trShifts.appendChild(tdShifts)
+               
+                tblBodyObj.appendChild(trShifts)
+            }
+            else
+            {
+              let trShifts = document.createElement("tr")
+              let tdShifts = document.createElement("td");
+                let txtStr="Employee does not have shifts"
+                tdShifts.innerText=txtStr
+                trShifts.appendChild(tdShifts)
+                tblBodyObj.appendChild(trShifts)
+            }
+          }
+
+
+        </script>
+        </head>
+        <body onload="getAllData()" style="background-color:#800006">
+            <div style = "position:relative; left:80px; top:2px;">
+                <h1>Factory managment system : Edit Employee</h1>
+                <h2 id="idFullname"></h2>
+                <button type="button" class="btn btn-dark" id="../Employees" onclick="changePage(this,true)">Employees</button>
+                <button type="button" class="btn btn-dark" id="../Departments" onclick="changePage(this,true)">Departments</button>
+                <button type="button" class="btn btn-dark" id="../Shifts" onclick="changePage(this,true)">Shifts</button>
+                <button type="button" class="btn btn-dark" id="../Users" onclick="changePage(this,true)">Users</button>
+                <button type="button" class="btn btn-dark" id="Logout" onclick="logoutA()">Logout</button>
+                <br/>
+                
+                 <br/><br/>
+                 <div class="form-group">
+                  <label for="idFirstName">First name</label>
+                  <input type="text" class="form-control" id="idFirstName" aria-describedby="First Name" placeholder="Enter first name">
+                </div>
+                <div class="form-group">
+                  <label for="idLastName">Last name</label>
+                  <input type="text" class="form-control" id="idLastName" placeholder="Enter last name">
+                </div>
+            
+                <div class="form-group">
+                  <label for="idStartWorkYear">Start work year</label>
+                  <input type="text" class="form-control" id="idStartWorkYear" placeholder="Start work year">
+                </div>
+               
+                <div class="form-group">
+                    <label for="idSelectDept">Select department</label>
+                    <select name="departments2" id="idSelectDept"></select>
+                  </div>
+                
+                
+                <button type="input" class="btn btn-primary" onclick="deleteEmployee()">Delete</button>
+              <!-- </form> -->
+              <button type="input" id="idUpdateEmp" onclick="updateEmployee()">Update</button>
+              <br><br>
+              <table bordersize="1">
+                <thead>
+                  <tr>
+                    <th scope="col">Employee Shifts</th>
+                    
+                  </tr>
+                </thead>
+                <tbody id="idTblBody">
+                 
+                </tbody>
+              </table>
+              <br>
+              <input type="checkbox" id="idRegChkBox" name="regChkBox" value="regShift">
+              <label for="idRegChkBox">Register to an existing shift</label>
+              <br>
+              <p> Please select a shift to register the employee:</p>
+              
+              <div id="shiftContainer">
+              </div>
+            </div>
+        </body>
+</html>

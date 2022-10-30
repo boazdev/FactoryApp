@@ -1,0 +1,125 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="../w3.css">
+    <head>
+        <title>Add Employee</title>
+        <script type="text/javascript" src="../menu.js"></script>
+        <script>
+            var gToken;
+            function logoutA()
+            {
+                document.location.href = "../login.html"
+            }
+            function cancel(cancelBtnObj)
+            {
+                changePage(cancelBtnObj,true)
+                //document.location.href = "../Employees.html"
+            }
+
+            async function getAllDepartments(userToken)
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/departments",fetchParams);
+            
+            let departmentData = await resp.json();
+            //console.log("departments data:")
+            //console.log(departmentData)
+            let selectObj2 = document.getElementById("idSelectDept2")
+            
+            departmentData.forEach(deptObj => {
+                let optionObj = document.createElement("option")
+                optionObj.value = deptObj._id
+                optionObj.innerText = deptObj.Name
+                selectObj2.appendChild(optionObj)
+            });
+
+            }
+            async function getAllData()
+            {
+                let token = sessionStorage["token"]
+                console.log("token: " + token)
+                let userFullname =sessionStorage["fullname"] 
+                let txtUserFullname = document.getElementById("idFullname");
+                txtUserFullname.innerText = "User Fullname: " + userFullname
+                getAllDepartments(token)
+            }
+            async function saveEmployee()
+            {
+                      let uToken = sessionStorage["token"]
+                      console.log("token: " + uToken)
+
+         let objSend = {Firstname : document.getElementById("idFirstName").value,
+                        Lastname : document.getElementById("idLastName").value,
+                        StartWorkYear : parseInt(document.getElementById("idStartWorkYear").value),
+                        DepartmentID : document.getElementById("idSelectDept2").value
+                    }
+
+            console.log("Sending obj:")
+            console.log(objSend)
+            try {
+                let fetchParams = {method : 'POST',
+                                    body : JSON.stringify(objSend),
+                                    headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+
+                let resp = await fetch("http://localhost:5000/employees",fetchParams);
+                
+                
+            let respData = await resp.json();
+            if(resp.ok)
+                redirect(respData,"Employees")
+            else
+                redirect(respData["error"],"login")
+            }
+            catch(e)
+            {
+                console.log(e)
+            }
+                
+            }
+        </script>
+    </head>
+    <body onload="getAllData()" style="background-color:#800006">
+        <div  style= "position:relative; left:80px; top:2px;">
+            <h1>Factory managment system : Add Employee</h1>
+            <h2 id="idFullname"></h2>
+            <button type="button" class="btn btn-dark" id="../Employees" onclick="changePage(this,true)">Employees</button>
+            <button type="button" class="btn btn-dark" id="../Departments" onclick="changePage(this,true)">Departments</button>
+            <button type="button" class="btn btn-dark" id="../Shifts" onclick="changePage(this,true)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="../Users" onclick="changePage(this,true)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logoutA()">Logout</button>
+            <br/>
+            
+             <br/><br/>
+  
+             <!-- <form> -->
+                <div class="form-group">
+                  <label for="idFirstName">First name</label>
+                  <input type="text" class="form-control" id="idFirstName" aria-describedby="First Name" placeholder="Enter first name">
+                </div>
+                <div class="form-group">
+                  <label for="idLastName">Last name</label>
+                  <input type="text" class="form-control" id="idLastName" placeholder="Enter last name">
+                </div>
+            
+                <div class="form-group">
+                  <label for="idStartWorkYear">Start work year</label>
+                  <input type="text" class="form-control" id="idStartWorkYear" placeholder="Start work year">
+                </div>
+               
+                <div class="form-group">
+                    <label for="idSelectDept2">Select department</label>
+                    <select name="departments2" id="idSelectDept2" ></select>
+                  </div>
+                
+                
+                <button type="input" id="../Employees" class="btn btn-primary" onclick="cancel(this)">Cancel</button>
+              <!-- </form> -->
+              <button type="input" id="blarg" onclick="saveEmployee()">Save</button>
+        
+        
+        </div>
+    </body>
+</html>

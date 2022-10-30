@@ -1,0 +1,172 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="w3.css">
+    <head>
+        <title>Employees</title>
+        <script type="text/javascript" src="menu.js"></script>
+        <script>
+            var employeeData = []
+            function filterTblDept()
+            {
+                let selectObj = document.getElementById("idSelectDept")
+                let val= selectObj.value
+                console.log("select value: " + val)
+                if(val=="all")
+                    empFilt=employeeData
+                else
+                    empFilt= employeeData.filter(emp => emp.departmentName == val)
+                console.log(empFilt)
+                let tblObj= document.getElementById("idTblBody")
+                while(tblObj.hasChildNodes())
+                    {
+                        tblObj.removeChild(tblObj.firstChild)
+                    }
+                fillTable(empFilt,tblObj)
+                
+
+            }
+            function popup()
+            {
+                alert("shit")
+            }
+            function fillTable(empData,tblObj)
+            {
+                empData.forEach(emp => {
+                
+
+                let tdName = document.createElement("td");
+                let linkObj = document.createElement("a")
+                linkObj.innerText = emp.Firstname +" " + emp.Lastname;
+                linkObj.href = "Employees/edit.html?empid=" + emp._id;
+                
+                tdName.appendChild(linkObj);
+        
+        
+                let tdDepartment = document.createElement("td");
+                linkObj = document.createElement("a")
+                linkObj.innerText = emp.departmentName
+                linkObj.href = "Departments/edit.html?deptid=" + emp.DepartmentID +"&deptname="+emp.departmentName;
+                
+                tdDepartment.appendChild(linkObj)
+        
+                let tdShifts = document.createElement("td");
+                let txtStr=""
+                if(emp.shifts!=null)
+                {
+                    
+                    emp.shifts.shiftDate.forEach(shift => {
+                        
+                    txtStr+=  shift.Date +" " + shift.StartingHour +":00 - " + shift.EndingHour + ':00\n' 
+                    
+                });
+                }
+                tdShifts.innerText=txtStr
+                
+                //tdShifts.innerText = "shifts data"
+                
+        
+                let trObj = document.createElement("tr");
+        
+                trObj.appendChild(tdName);
+                trObj.appendChild(tdDepartment);
+                trObj.appendChild(tdShifts);
+          
+        
+        
+                tblObj.appendChild(trObj);
+                    });
+            }
+            async function getAllDepartments(userToken)
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/departments",fetchParams);
+            
+            let departmentData = await resp.json();
+            //console.log("departments data:")
+            //console.log(departmentData)
+            let selectObj = document.getElementById("idSelectDept")
+            let firstOpt = document.createElement("option")
+            firstOpt.value="all"
+            firstOpt.innerText="All"
+            selectObj.appendChild(firstOpt)
+            departmentData.forEach(deptObj => {
+                let optionObj = document.createElement("option")
+                optionObj.value = deptObj.Name
+                optionObj.innerText = deptObj.Name
+                selectObj.appendChild(optionObj)
+            })
+            }
+
+            function addEmployee()
+            {
+
+                document.location.href = "Employees/add.html"
+            }
+            function editEmployee()
+            {
+                document.location.href = "Employees/edit.html"
+            }
+            async function getAllData()
+            {
+                let token = sessionStorage["token"]
+                let userFullname =sessionStorage["fullname"] 
+                //let userData = parseJwt(token)
+            //console.log(token);
+            let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : token}//{"Content-Type" : "application/json"}
+                      }
+            let resp = await fetch("http://localhost:5000/employees/?is_join=true",fetchParams);
+            
+            employeeData = await resp.json();
+            
+            if(resp.ok!=true)
+                redirectClient(employeeData["error"],"login")
+
+            txtUserFullname = document.getElementById("idFullname");
+            txtUserFullname.innerText = "User Fullname: " + userFullname
+            
+            let tblBody=document.getElementById("idTblBody")
+            console.log(employeeData)
+            fillTable(employeeData, tblBody)
+           
+
+            getAllDepartments(token)
+            }
+        </script>
+    </head>
+    <body onload="getAllData()" bgcolor="#800006">
+        <div class="container">
+            <h1>Factory managment system : Employees</h1>
+            <h2 id="idFullname"></h2>
+            <button type="button" class="btn btn-dark" id="Employees" onclick="changePage(this)">Employees</button>
+            <button type="button" class="btn btn-dark" id="Departments" onclick="changePage(this)">Departments</button>
+            <button type="button" class="btn btn-dark" id="Shifts" onclick="changePage(this)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="Users" onclick="changePage(this)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logout()">Logout</button>
+            <br/>
+            <button type="button" class="btn btn-dark" id="Employees/add" onclick="changePage(this)">Add Employee</button>
+            
+             <br/><br/>
+
+             <table border="1">
+                <thead>
+                  <tr>
+                    <th scope="col">Fullname</th>
+                    <th scope="col">Department</th>
+                    <th scope="col">Shifts</th>
+                    <th scope="col">Filter departments: <select name="departments" id="idSelectDept" onchange="filterTblDept()"></select></th>
+                  </tr>
+                </thead>
+                <tbody id="idTblBody">
+                 
+                </tbody>
+              </table>
+        
+           
+        
+        
+        </div>
+    </body>
+</html>

@@ -1,0 +1,270 @@
+<html>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="w3.css">
+    <head>
+        <title>Shifts</title>
+        <script type="text/javascript" src="menu.js"></script>
+        <script>
+            var userToken
+            var gShiftsData
+            var shiftDict
+            async function getAllEmployees()
+            {
+                let fetchParams = {method : 'GET',
+                      headers : {'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/employees",fetchParams);
+            
+            let empsData = await resp.json();
+            
+            return empsData
+            }
+                
+            async function getAllShifts()
+            {
+                let param = "?is_existing="+ "true"
+                let fetchParams = {method : 'GET',  ///?is_join=true
+                      headers : {"Content-Type" : "application/json",'x-access-token' : userToken}
+                }
+                let resp = await fetch("http://localhost:5000/shifts/"+param,fetchParams);
+            
+            let shiftsData = await resp.json();
+            return shiftsData
+            }
+
+            async function addEmpToShift()
+            {
+                let uToken = sessionStorage["token"]
+                empIdStr = document.getElementById("idSelectEmp").value
+                shiftIdStr = document.getElementById("idSelectShift").value
+         let objSend = {empID : empIdStr,
+                        shiftID : shiftIdStr
+                    }
+
+            console.log("Sending obj:")
+            console.log(objSend)
+            try {
+                let fetchParams = {method : 'PUT',
+                                    body : JSON.stringify(objSend),
+                                    headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+                let resp = await fetch("http://localhost:5000/shifts/"+shiftIdStr,fetchParams);
+                
+                
+            let respData = await resp.json();
+            if(resp.ok)
+                redirectClient(respData,"Shifts")
+            else
+                redirectClient(usersData["error"],"login")
+            }
+            catch(e)
+            {
+               //console.log(e.message)
+                redirectClient(e.message,"Shifts")
+            }
+            }
+
+            async function sendShiftData()
+            {
+                let methodStr=""
+                let urlShifts = "http://localhost:5000/shifts"
+                if(document.getElementById("idNew").checked)
+                {
+                    methodStr = "POST"
+                }
+                else if(document.getElementById("idEdit").checked)
+                {
+                    methodStr = "PUT"
+                    urlShifts+="/" + document.getElementById("idSelectShift").value
+                }
+                //console.log("id checked:")
+                //console.log("id checked:")
+                dateVal = document.getElementById("idShiftDate").value
+                startHourVal = parseInt(document.getElementById("idStartHour").value.substring(0,2))
+                endHourVal = parseInt(document.getElementById("idEndHour").value.substring(0,2))
+
+                let uToken = sessionStorage["token"]
+         let objSend = {Date : dateVal,
+                        StartingHour : startHourVal,
+                        EndingHour : endHourVal
+                    }
+
+            console.log("Sending obj:")
+            console.log(objSend)
+            try {
+                let fetchParams = {method : methodStr,
+                                    body : JSON.stringify(objSend),
+                                    headers : {"Content-Type" : "application/json",'x-access-token' : uToken}
+                }
+                let resp = await fetch(urlShifts,fetchParams);
+                
+                
+            let respData = await resp.json();
+            if(resp.ok)
+                redirectClient(respData,"Shifts")
+            else
+                redirectClient(usersData["error"],"login")
+            }
+            
+            catch(e)
+            {
+               //console.log(e.message)
+                redirectClient(e.message,"Shifts")
+            }
+            }
+            
+            function fillShiftSelect(shiftsData,selectObj)
+            {
+                shiftDict = {}
+                shiftsData.forEach(shift => {
+                let optionObj = document.createElement("option")
+                shiftDict[shift._id] = {"date": shift.Date, "startHour":shift.StartingHour, "endHour":shift.EndingHour}
+                optionObj.value = shift._id
+                optionObj.innerText = shift.Date +" " + shift.StartingHour.toString() + ":00 - " +  shift.EndingHour.toString()+":00  " + "(id:" +shift._id + ")"
+                selectObj.appendChild(optionObj)
+                })
+            }
+
+            function fillEmpSelect(empData,selectObj)
+            {
+                empData.forEach(emp => {
+                let optionObj = document.createElement("option")
+                optionObj.value = emp._id
+                optionObj.innerText = emp.Firstname +" " +emp.Lastname
+                selectObj.appendChild(optionObj)
+                })
+            }
+
+            async function getAllData() //get all shifts, and all employees
+            {
+                userToken=sessionStorage["token"]
+                let userFullname =sessionStorage["fullname"] 
+                txtUserFullname = document.getElementById("idFullname");
+                txtUserFullname.innerText = "User Fullname: " + userFullname
+
+                document.querySelectorAll("input[name='actionOption']").forEach((input) => {
+                input.addEventListener('change', changeRadio);
+                });
+                shiftsData = await getAllShifts()
+                empsData = await getAllEmployees()
+                fillShiftSelect(shiftsData,document.getElementById("idSelectShift"))
+                fillEmpSelect(empsData,document.getElementById("idSelectEmp"))
+                //gShiftsData=shiftsData
+            }
+           
+    function changeRadio(event) {
+        //console.log('Checked radio with ID = ' + event.target.id);
+        if(event.target.id=="idNew")
+        {
+            //document.getElementById("idAddShift").style.visibility = "visible";
+            document.getElementById("idDivAddShift").style.display = "";
+            document.getElementById("idDivSelectShift").style.display = "none";
+            document.getElementById("idDivAddEmp").style.display = "none";
+        }
+        if(event.target.id=="idEdit")
+        {
+            //document.getElementById("idAddShift").style.visibility = "visible";
+            document.getElementById("idDivSelectShift").style.display = "";
+            document.getElementById("idDivAddShift").style.display = "";
+            document.getElementById("idDivAddEmp").style.display = "none";
+
+            shiftId =document.getElementById("idSelectShift").value
+
+            dateObj = document.getElementById("idShiftDate")
+            dateObj.value = shiftDict[shiftId]["date"]
+
+            sHourObj = document.getElementById("idStartHour")
+          
+            if (shiftDict[shiftId]["startHour"]<10)
+                sHourObj.value= "0" + shiftDict[shiftId]["startHour"] +":00:00"
+            else
+                sHourObj.value=shiftDict[shiftId]["startHour"] +":00:00"
+
+
+
+            eHourObj = document.getElementById("idEndHour")
+            if (shiftDict[shiftId]["endHour"]<10)
+                eHourObj.value= "0" + shiftDict[shiftId]["endHour"]
+            else
+                eHourObj.value=shiftDict[shiftId]["endHour"] +":00:00"
+        }
+        if(event.target.id=="idAddEmp")
+        {
+            //document.getElementById("idAddShift").style.visibility = "visible";
+            document.getElementById("idDivAddEmp").style.display = "";
+            document.getElementById("idDivSelectShift").style.display = "";
+            document.getElementById("idDivAddShift").style.display = "none";
+        }
+        
+    }
+    function changeShift()
+    {
+        shiftId =document.getElementById("idSelectShift").value
+
+            dateObj = document.getElementById("idShiftDate")
+            dateObj.value = shiftDict[shiftId]["date"]
+
+            sHourObj = document.getElementById("idStartHour")
+          
+            if (shiftDict[shiftId]["startHour"]<10)
+                sHourObj.value= "0" + shiftDict[shiftId]["startHour"] +":00:00"
+            else
+                sHourObj.value=shiftDict[shiftId]["startHour"] +":00:00"
+
+
+            //console.log("end hour value to set: " +shiftDict[shiftId]["date"])
+            eHourObj = document.getElementById("idEndHour")
+            if (shiftDict[shiftId]["endHour"]<10)
+                eHourObj.value= "0" + shiftDict[shiftId]["endHour"] +":00:00"
+            else
+                eHourObj.value=shiftDict[shiftId]["endHour"] +":00:00"
+    }
+    
+
+        </script>
+    </head>
+    <body onload="getAllData()" style="background-color:#800006;">
+        <div class="container">
+            <h1>Factory managment system : Shifts</h1>
+            <h1 id="idFullname"></h1>
+            <button type="button" class="btn btn-dark" id="Employees" onclick="changePage(this)">Employees</button>
+            <button type="button" class="btn btn-dark" id="Departments" onclick="changePage(this)">Departments</button>
+            <button type="button" class="btn btn-dark" id="Shifts" onclick="changePage(this)">Shifts</button>
+            <button type="button" class="btn btn-dark" id="Users" onclick="changePage(this)">Users</button>
+            <button type="button" class="btn btn-dark" id="Logout" onclick="logout()">Logout</button>
+            <br/> <br/>
+            &nbsp Select option:<br>
+            <div>
+                &nbsp;&nbsp<input type="radio" id="idNew" name="actionOption" value="new">
+                <label for="idNew">Create Shift</label><br>
+              <input type="radio" id="idEdit" name="actionOption" value="edit">
+              <label for="idEdit">Change Shift</label><br>
+              <input type="radio" id="idAddEmp" name="actionOption" value="addEmp">
+              <label for="idAddEmp">Allocate Employees</label>
+        </div>
+        <br>
+        <div id="idDivSelectShift" style="display:none">
+            Select shift: <select id="idSelectShift" onchange="changeShift()"></select>
+            <br>
+        </div>
+        <div id="idDivAddShift" style="display:none" >
+            Select date:<input type="date" name="date" id="idShiftDate"><br>
+            Select Time:<br>
+            Starting Hour:<input type="time" id="idStartHour" value="09:00"><br>
+            Ending Hour:<input type="time" id="idEndHour" value="17:00"><br>
+            <button type="button" onclick="sendShiftData()" >Submit</button>
+        </div>
+        <div id="idDivAddEmp" style="display:none">
+            Allocate Employee: <select id="idSelectEmp"></select><br>
+            <button type="button" onclick="addEmpToShift()" >Submit</button>
+        </div>
+
+  
+            
+        
+           
+        
+        
+        </div>
+    </body>
+</html>
